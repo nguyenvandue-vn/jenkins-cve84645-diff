@@ -74,6 +74,7 @@ public class RequestImpl extends HttpServletRequestWrapper implements StaplerReq
     private static int FILEUPLOAD_MAX_FILES;
     private static long FILEUPLOAD_MAX_FILE_SIZE;
     private static long FILEUPLOAD_MAX_SIZE;
+    private static boolean ALLOW_STATIC_FIELD_BINDING;
     private static final Logger LOGGER;
     static final /* synthetic */ boolean $assertionsDisabled;
 
@@ -82,6 +83,7 @@ public class RequestImpl extends HttpServletRequestWrapper implements StaplerReq
         FILEUPLOAD_MAX_FILES = Integer.getInteger(RequestImpl.class.getName() + ".FILEUPLOAD_MAX_FILES", 1000).intValue();
         FILEUPLOAD_MAX_FILE_SIZE = Long.getLong(RequestImpl.class.getName() + ".FILEUPLOAD_MAX_FILE_SIZE", -1L).longValue();
         FILEUPLOAD_MAX_SIZE = Long.getLong(RequestImpl.class.getName() + ".FILEUPLOAD_MAX_SIZE", -1L).longValue();
+        ALLOW_STATIC_FIELD_BINDING = Boolean.getBoolean(RequestImpl.class.getName() + ".ALLOW_STATIC_FIELD_BINDING");
         ALLOWED_HTTP_VERBS_FOR_FORMS = (List) Arrays.stream(System.getProperty(RequestImpl.class.getName() + ".ALLOWED_HTTP_VERBS_FOR_FORMS", "POST").split(",")).map((v0) -> {
             return v0.trim();
         }).collect(Collectors.toList());
@@ -667,7 +669,7 @@ public class RequestImpl extends HttpServletRequestWrapper implements StaplerReq
                         Object v = e3.getValue();
                         String className2 = e3.getKey().replace('-', '.');
                         try {
-                            Class<?> itemType = cl2.loadClass(className2);
+                            Class<?> itemType = cl2.loadClass(className2).asSubclass(l.itemType);
                             if (v instanceof JSONObject) {
                                 l.add(RequestImpl.this.bindJSON((Class) itemType, (JSONObject) v));
                             }
@@ -676,7 +678,7 @@ public class RequestImpl extends HttpServletRequestWrapper implements StaplerReq
                                     l.add(i2);
                                 }
                             }
-                        } catch (ClassNotFoundException e4) {
+                        } catch (ClassCastException | ClassNotFoundException e4) {
                         }
                     }
                 } else if (Enum.class.isAssignableFrom(l.itemType)) {
@@ -877,13 +879,17 @@ public class RequestImpl extends HttpServletRequestWrapper implements StaplerReq
         Method m;
         try {
             PropertyDescriptor propDescriptor = PropertyUtils.getPropertyDescriptor(bean, name);
-            if (propDescriptor != null && (m = propDescriptor.getWriteMethod()) != null) {
+            if (propDescriptor != null && (m = propDescriptor.getWriteMethod()) != null && (!Modifier.isStatic(m.getModifiers()) || ALLOW_STATIC_FIELD_BINDING)) {
                 return new TypePair(m.getGenericParameterTypes()[0], m.getParameterTypes()[0]);
             }
         } catch (NoSuchMethodException e) {
         }
         try {
-            return new TypePair(this, bean.getClass().getField(name));
+            Field field = bean.getClass().getField(name);
+            if (!Modifier.isStatic(field.getModifiers()) || ALLOW_STATIC_FIELD_BINDING) {
+                return new TypePair(this, field);
+            }
+            return null;
         } catch (NoSuchFieldException e2) {
             return null;
         }
@@ -913,6 +919,9 @@ public class RequestImpl extends HttpServletRequestWrapper implements StaplerReq
         }
         try {
             Field field = bean.getClass().getField(name);
+            if (!ALLOW_STATIC_FIELD_BINDING && Modifier.isStatic(field.getModifiers())) {
+                return;
+            }
             Converter converter2 = ConvertUtils.lookup(field.getType());
             if (converter2 != null) {
                 value = converter2.convert(field.getType(), value);

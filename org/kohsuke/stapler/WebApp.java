@@ -44,7 +44,7 @@ public class WebApp {
     public final Map<String, String> mimeTypes = new Hashtable();
     public final BoundObjectTable boundObjectTable = new BoundObjectTable();
     private final CopyOnWriteArrayList<HttpResponseRenderer> responseRenderers = new CopyOnWriteArrayList<>();
-    private CrumbIssuer crumbIssuer = CrumbIssuer.DEFAULT;
+    private CrumbIssuer crumbIssuer = CrumbIssuer.NONE;
     private final ConcurrentMap<String, Stapler> servlets = new ConcurrentHashMap();
     private FunctionList.Filter filterForGetMethods = FunctionList.Filter.ALWAYS_OK;
     private FunctionList.Filter filterForDoActions = FunctionList.Filter.ALWAYS_OK;

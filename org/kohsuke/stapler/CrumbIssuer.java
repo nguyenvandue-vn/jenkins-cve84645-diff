@@ -1,24 +1,20 @@
 package org.kohsuke.stapler;
 
-import jakarta.servlet.http.HttpSession;
-import java.util.UUID;
-
 /* loaded from: CrumbIssuer.class */
 public abstract class CrumbIssuer {
-    public static final CrumbIssuer DEFAULT = new CrumbIssuer() { // from class: org.kohsuke.stapler.CrumbIssuer.1
+    public static final CrumbIssuer NONE = new CrumbIssuer() { // from class: org.kohsuke.stapler.CrumbIssuer.1
         @Override // org.kohsuke.stapler.CrumbIssuer
         public String issueCrumb(StaplerRequest2 request) {
-            HttpSession s = request.getSession();
-            String v = (String) s.getAttribute(CrumbIssuer.ATTRIBUTE_NAME);
-            if (v != null) {
-                return v;
-            }
-            String v2 = UUID.randomUUID().toString();
-            s.setAttribute(CrumbIssuer.ATTRIBUTE_NAME, v2);
-            return v2;
+            return "";
+        }
+
+        @Override // org.kohsuke.stapler.CrumbIssuer
+        public String getCrumbExpression() {
+            return "''";
         }
     };
-    private static final String ATTRIBUTE_NAME = CrumbIssuer.class.getName();
+
+    public abstract String getCrumbExpression();
 
     public String issueCrumb(StaplerRequest2 request) {
         return (String) ReflectionUtils.ifOverridden(() -> {

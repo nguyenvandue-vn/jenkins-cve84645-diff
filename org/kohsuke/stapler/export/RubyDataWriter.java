@@ -12,7 +12,7 @@ final class RubyDataWriter extends JSONDataWriter {
     @Override // org.kohsuke.stapler.export.JSONDataWriter
     public void name(String name) throws IOException {
         comma();
-        this.out.write("\"" + name + "\" => ");
+        this.out.write("\"" + escape(name) + "\" => ");
         this.needComma = false;
     }
 

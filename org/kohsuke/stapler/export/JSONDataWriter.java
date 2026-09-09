@@ -30,9 +30,9 @@ class JSONDataWriter implements DataWriter {
     public void name(String name) throws IOException {
         comma();
         if (this.indent < 0) {
-            this.out.write("\"" + name + "\":");
+            this.out.write("\"" + escape(name) + "\":");
         } else {
-            this.out.write("\"" + name + "\" : ");
+            this.out.write("\"" + escape(name) + "\" : ");
         }
         this.needComma = false;
     }
@@ -86,8 +86,11 @@ class JSONDataWriter implements DataWriter {
     }
 
     public void value(String v) throws IOException {
+        data("\"" + escape(v) + "\"");
+    }
+
+    protected static String escape(String v) {
         StringBuilder buf = new StringBuilder(v.length());
-        buf.append('\"');
         for (int i = 0; i < v.length(); i++) {
             char c = v.charAt(i);
             if (Character.isISOControl(c) || Character.isHighSurrogate(c) || Character.isLowSurrogate(c)) {
@@ -119,8 +122,7 @@ class JSONDataWriter implements DataWriter {
                 }
             }
         }
-        buf.append('\"');
-        data(buf.toString());
+        return buf.toString();
     }
 
     public void valueNull() throws IOException {

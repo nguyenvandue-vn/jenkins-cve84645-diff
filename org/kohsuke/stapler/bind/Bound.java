@@ -63,11 +63,11 @@ public abstract class Bound implements HttpResponse {
     }
 
     public static String getProxyScript(String url, String[] methods) {
-        String crumb = WebApp.getCurrent().getCrumbIssuer().issueCrumb();
+        String crumb = WebApp.getCurrent().getCrumbIssuer().getCrumbExpression();
         String methodNamesList = (String) Arrays.stream(methods).sorted().map(it -> {
             return "'" + escapeQuotedString(it) + "'";
         }).collect(Collectors.joining(","));
-        return "makeStaplerProxy('" + escapeQuotedString(url) + "','" + crumb + "',[" + methodNamesList + "])";
+        return "makeStaplerProxy('" + escapeQuotedString(url) + "'," + crumb + ",[" + methodNamesList + "])";
     }
 
     private static String escapeQuotedString(String singleQuotedJsValue) {
