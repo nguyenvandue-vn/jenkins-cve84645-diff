@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import jenkins.model.Jenkins;
+import jenkins.security.XStreamDeserializable;
 import net.jcip.annotations.GuardedBy;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
@@ -60,6 +61,7 @@ public class ListView extends View implements DirectlyModifiableView {
     private volatile boolean recurse;
     private transient Pattern includePattern;
 
+    @XStreamDeserializable
     @Deprecated
     private transient Boolean statusFilter;
 

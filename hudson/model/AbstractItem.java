@@ -44,6 +44,7 @@ import jenkins.model.Jenkins;
 import jenkins.model.Loadable;
 import jenkins.model.queue.ItemDeletion;
 import jenkins.security.ExtendedReadRedaction;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.security.stapler.StaplerNotDispatchable;
 import jenkins.util.SystemProperties;
 import jenkins.util.xml.XMLUtils;
@@ -79,8 +80,12 @@ import org.xml.sax.SAXException;
 /* loaded from: AbstractItem.class */
 public abstract class AbstractItem extends Actionable implements Loadable, Item, HttpDeletable, AccessControlled, DescriptorByNameOwner, StaplerProxy {
     private static final Logger LOGGER;
+
+    @XStreamNotDeserializable
     protected transient String name;
     protected volatile String description;
+
+    @XStreamNotDeserializable
     private transient ItemGroup parent;
     protected String displayName;
 

@@ -87,6 +87,7 @@ import jenkins.model.details.ProjectNameDetail;
 import jenkins.model.details.UpstreamProjectsDetail;
 import jenkins.scm.RunWithSCM;
 import jenkins.security.HexStringConfidentialKey;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.security.stapler.StaplerNotDispatchable;
 import jenkins.triggers.SCMTriggerItem;
 import jenkins.widgets.HasWidgets;
@@ -122,7 +123,11 @@ import org.kohsuke.stapler.verb.POST;
 /* loaded from: Job.class */
 public abstract class Job<JobT extends Job<JobT, RunT>, RunT extends Run<JobT, RunT>> extends AbstractItem implements ExtensionPoint, StaplerOverridable, ModelObjectWithChildren, HasWidgets {
     protected volatile transient int nextBuildNumber;
+
+    @XStreamNotDeserializable
     private volatile transient boolean holdOffBuildUntilSave;
+
+    @XStreamNotDeserializable
     private volatile transient boolean holdOffBuildUntilUserSave;
 
     @Deprecated

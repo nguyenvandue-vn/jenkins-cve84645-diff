@@ -5,12 +5,15 @@ import hudson.ExtensionPoint;
 import hudson.Util;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
+import jenkins.security.XStreamNotDeserializable;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerRequest2;
 
 /* loaded from: ViewProperty.class */
 public class ViewProperty implements ReconfigurableDescribable<ViewProperty>, ExtensionPoint {
+
+    @XStreamNotDeserializable
     protected transient View view;
 
     final void setView(View view) {

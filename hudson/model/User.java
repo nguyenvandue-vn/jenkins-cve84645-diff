@@ -77,7 +77,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 @ExportedBean
 @BridgeMethodsAdded
 /* loaded from: User.class */
-public class User extends AbstractModelObject implements AccessControlled, DescriptorByNameOwner, Loadable, Saveable, Comparable<User>, ModelObjectWithContextMenu, StaplerProxy {
+public class User extends AbstractModelObject implements AccessControlled, DescriptorByNameOwner, Loadable, Saveable, Comparable<User>, ModelObjectWithContextMenu, StaplerProxy, PersistenceRoot {
     static final String CONFIG_XML = "config.xml";
     String id;
     private volatile String fullName;
@@ -448,7 +448,7 @@ public class User extends AbstractModelObject implements AccessControlled, Descr
 
     public static void rekey() {
         try {
-            File[] subdirectories = getRootDir().listFiles();
+            File[] subdirectories = getUsersDirectory().listFiles();
             if (subdirectories != null) {
                 for (File oldDirectory : subdirectories) {
                     String dirName = oldDirectory.getName();
@@ -536,8 +536,12 @@ public class User extends AbstractModelObject implements AccessControlled, Descr
         return null;
     }
 
-    static File getRootDir() {
+    static File getUsersDirectory() {
         return new File(Jenkins.get().getRootDir(), "users");
+    }
+
+    public File getRootDir() {
+        return getUserFolderFor(this.id);
     }
 
     private static String getUserFolderNameFor(String id) {
@@ -547,7 +551,7 @@ public class User extends AbstractModelObject implements AccessControlled, Descr
 
     @SuppressFBWarnings(value = {"PATH_TRAVERSAL_IN"}, justification = "sanitized")
     static File getUserFolderFor(String id) {
-        return new File(getRootDir(), getUserFolderNameFor(id));
+        return new File(getUsersDirectory(), getUserFolderNameFor(id));
     }
 
     public static boolean isIdOrFullnameAllowed(@CheckForNull String id) {
@@ -761,7 +765,7 @@ public class User extends AbstractModelObject implements AccessControlled, Descr
             User.DIRNAMES.createMac();
             AllUsers instance = getInstance();
             instance.migrateUserIdMapper();
-            File[] subdirectories = User.getRootDir().listFiles();
+            File[] subdirectories = User.getUsersDirectory().listFiles();
             if (subdirectories == null) {
                 return;
             }

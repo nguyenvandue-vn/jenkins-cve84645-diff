@@ -3,6 +3,7 @@ package hudson.util;
 import com.thoughtworks.xstream.XStreamException;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.Converter;
+import com.thoughtworks.xstream.converters.ConverterLookup;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.SingleValueConverter;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
@@ -18,6 +19,7 @@ import com.thoughtworks.xstream.mapper.Mapper;
 import com.thoughtworks.xstream.security.InputManipulationException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.diagnosis.OldDataMonitor;
+import hudson.model.PersistenceRoot;
 import hudson.model.Saveable;
 import hudson.security.ACL;
 import hudson.util.CopyOnWriteList;
@@ -26,6 +28,7 @@ import hudson.util.PersistedList;
 import hudson.util.XStream2;
 import hudson.util.XStream2.PluginClassOwnership;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +52,8 @@ import org.jvnet.tiger_types.Types;
 
 /* loaded from: RobustReflectionConverter.class */
 public class RobustReflectionConverter implements Converter {
+    static boolean DISABLE_XSTREAM_NOT_DESERIALIZABLE_CHECK;
+    static boolean TRANSIENT_FIELD_STRICT_MODE;
     static boolean RECORD_FAILURES_FOR_ALL_AUTHENTICATIONS;
     private static boolean RECORD_FAILURES_FOR_ADMINS;
     static final Set<String> SAFE_TYPES_WITH_OBJECT_FIELDS;
@@ -64,11 +69,14 @@ public class RobustReflectionConverter implements Converter {
 
     @GuardedBy("criticalFieldsLock")
     private final Map<String, Set<String>> criticalFields;
+    private ConverterLookup converterLookup;
     private static final Logger LOGGER;
     static final /* synthetic */ boolean $assertionsDisabled;
 
     static {
         $assertionsDisabled = !RobustReflectionConverter.class.desiredAssertionStatus();
+        DISABLE_XSTREAM_NOT_DESERIALIZABLE_CHECK = SystemProperties.getBoolean(RobustReflectionConverter.class.getName() + ".DISABLE_XSTREAM_NOT_DESERIALIZABLE_CHECK", false);
+        TRANSIENT_FIELD_STRICT_MODE = SystemProperties.getBoolean(RobustReflectionConverter.class.getName() + ".TRANSIENT_FIELD_STRICT_MODE", false);
         RECORD_FAILURES_FOR_ALL_AUTHENTICATIONS = SystemProperties.getBoolean(RobustReflectionConverter.class.getName() + ".recordFailuresForAllAuthentications", false);
         RECORD_FAILURES_FOR_ADMINS = SystemProperties.getBoolean(RobustReflectionConverter.class.getName() + ".recordFailuresForAdmins", false);
         SAFE_TYPES_WITH_OBJECT_FIELDS = new HashSet();
@@ -81,6 +89,10 @@ public class RobustReflectionConverter implements Converter {
         }
         SAFE_TYPES_WITH_OBJECT_FIELDS.add("org.jenkinsci.plugins.pipeline.modeldefinition.ast.ModelASTValue");
         LOGGER = Logger.getLogger(RobustReflectionConverter.class.getName());
+    }
+
+    void setConverterLookup(ConverterLookup converterLookup) {
+        this.converterLookup = converterLookup;
     }
 
     public RobustReflectionConverter(Mapper mapper, ReflectionProvider reflectionProvider) {
@@ -302,16 +314,33 @@ public class RobustReflectionConverter implements Converter {
         Map<String, Class<?>> implicitCollectionElementTypesForCurrentObject = new HashMap<>();
         while (reader.hasMoreChildren()) {
             reader.moveDown();
+            boolean critical = false;
             try {
                 String fieldName = this.mapper.realMember(result.getClass(), reader.getNodeName());
-                for (Class<?> concrete = result.getClass(); concrete != null && !hasCriticalField(concrete, fieldName); concrete = concrete.getSuperclass()) {
+                Class<?> concrete = result.getClass();
+                while (true) {
+                    if (concrete == null) {
+                        break;
+                    }
+                    if (!hasCriticalField(concrete, fieldName)) {
+                        concrete = concrete.getSuperclass();
+                    } else {
+                        critical = true;
+                        break;
+                    }
                 }
                 boolean implicitCollectionHasSameName = this.mapper.getImplicitCollectionDefForFieldName(result.getClass(), reader.getNodeName()) != null;
                 Class classDefiningField2 = determineWhichClassDefinesField(reader);
                 boolean fieldExistsInClass = !implicitCollectionHasSameName && fieldDefinedInClass(result, fieldName);
                 Class type2 = determineType(reader, fieldExistsInClass, result, fieldName, classDefiningField2);
                 if (fieldExistsInClass) {
-                    value = unmarshalField(context, result, type2, this.reflectionProvider.getField(result.getClass(), fieldName));
+                    Field field2 = this.reflectionProvider.getField(result.getClass(), fieldName);
+                    if (PersistenceRoot.class.isAssignableFrom(type2) && !isSafePersistenceRootReference(reader)) {
+                        String msg = "Refusing to unmarshal PersistenceRoot subtype '" + type2.getName() + "' into field '" + fieldName + "' in '" + result.getClass().getName() + "'. PersistenceRoot objects are document roots and must not appear as nested field values.";
+                        LOGGER.log(Level.WARNING, msg);
+                        throw new CriticalXStreamException(new XStreamException(msg));
+                    }
+                    value = unmarshalField(context, result, type2, field2);
                     Class definedType = this.reflectionProvider.getFieldType(result, fieldName, classDefiningField2);
                     if (!definedType.isPrimitive()) {
                         type2 = definedType;
@@ -327,21 +356,21 @@ public class RobustReflectionConverter implements Converter {
                 } else {
                     writeValueToImplicitCollection(reader, context, value, implicitCollectionsForCurrentObject, implicitCollectionElementTypesForCurrentObject, result, fieldName);
                 }
-            } catch (InputManipulationException e) {
-                LOGGER.warning("DoS detected and prevented. If the heuristic was too aggressive, you can customize the behavior by setting the hudson.util.XStream2.collectionUpdateLimit system property. See https://www.jenkins.io/redirect/xstream-dos-prevention for more information.");
-                throw new CriticalXStreamException(e);
+            } catch (CriticalXStreamException e) {
+                throw e;
             } catch (XStreamException e2) {
-                if (0 != 0) {
+                if (critical) {
                     throw new CriticalXStreamException(e2);
                 }
                 addErrorInContext(context, e2);
             } catch (LinkageError e3) {
-                if (0 != 0) {
+                if (critical) {
                     throw e3;
                 }
                 addErrorInContext(context, e3);
-            } catch (CriticalXStreamException e4) {
-                throw e4;
+            } catch (InputManipulationException e4) {
+                LOGGER.warning("DoS detected and prevented. If the heuristic was too aggressive, you can customize the behavior by setting the hudson.util.XStream2.collectionUpdateLimit system property. See https://www.jenkins.io/redirect/xstream-dos-prevention for more information.");
+                throw new CriticalXStreamException(e4);
             }
             reader.moveUp();
         }
@@ -384,8 +413,54 @@ public class RobustReflectionConverter implements Converter {
         list.add(e);
     }
 
+    private boolean isSafePersistenceRootReference(HierarchicalStreamReader reader) {
+        String referenceAttr = reader.getAttribute(this.mapper.aliasForSystemAttribute("reference"));
+        if (referenceAttr != null) {
+            return true;
+        }
+        String classAttr = reader.getAttribute(this.mapper.aliasForAttribute("class"));
+        if (classAttr != null) {
+            if (this.converterLookup != null) {
+                try {
+                    Class<?> resolvedType = this.mapper.realClass(classAttr);
+                    if (this.converterLookup.lookupConverterForType(resolvedType) instanceof SingleValueConverter) {
+                        return true;
+                    }
+                    return false;
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+            return false;
+        }
+        String resolvesToAttr = reader.getAttribute(this.mapper.aliasForAttribute("resolves-to"));
+        if (resolvesToAttr == null) {
+            return false;
+        }
+        try {
+            Class<?> replacerType = this.mapper.realClass(resolvesToAttr);
+            return !PersistenceRoot.class.isAssignableFrom(replacerType);
+        } catch (Exception e2) {
+            return false;
+        }
+    }
+
     private boolean fieldDefinedInClass(Object result, String attrName) {
-        return this.reflectionProvider.getFieldOrNull(result.getClass(), attrName) != null;
+        Field field = this.reflectionProvider.getFieldOrNull(result.getClass(), attrName);
+        if (field == null) {
+            return false;
+        }
+        if (!Modifier.isTransient(field.getModifiers())) {
+            return true;
+        }
+        if (DISABLE_XSTREAM_NOT_DESERIALIZABLE_CHECK || !Arrays.stream(field.getAnnotations()).anyMatch(a -> {
+            return "XStreamNotDeserializable".equals(a.annotationType().getSimpleName());
+        })) {
+            return !TRANSIENT_FIELD_STRICT_MODE || Arrays.stream(field.getAnnotations()).anyMatch(a2 -> {
+                return "XStreamDeserializable".equals(a2.annotationType().getSimpleName());
+            });
+        }
+        return false;
     }
 
     protected Object unmarshalField(final UnmarshallingContext context, final Object result, Class type, Field field) {

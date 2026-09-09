@@ -12,6 +12,7 @@ import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import jenkins.model.identity.InstanceIdentityProvider;
+import jenkins.security.XStreamDeserializable;
 import jenkins.slaves.RemotingWorkDirSettings;
 import jenkins.util.SystemProperties;
 import jenkins.websocket.WebSockets;
@@ -29,6 +30,7 @@ public class JNLPLauncher extends ComputerLauncher {
     @SuppressFBWarnings(value = {"PA_PUBLIC_PRIMITIVE_ATTRIBUTE"}, justification = "Preserve API compatibility")
     public String tunnel;
 
+    @XStreamDeserializable
     @Deprecated
     public final transient String vmargs;
 

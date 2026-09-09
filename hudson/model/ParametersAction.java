@@ -5,7 +5,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Util;
-import hudson.diagnosis.OldDataMonitor;
 import hudson.model.Queue;
 import hudson.model.labels.LabelAssignmentAction;
 import hudson.model.queue.SubTask;
@@ -25,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.RunAction2;
 import jenkins.model.experimentalflags.NewBuildPageUserExperimentalFlag;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.util.SystemProperties;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -40,8 +40,7 @@ public class ParametersAction implements RunAction2, Iterable<ParameterValue>, Q
     private List<ParameterValue> parameters;
     private List<String> parameterDefinitionNames;
 
-    @Deprecated
-    private transient AbstractBuild<?, ?> build;
+    @XStreamNotDeserializable
     private transient Run<?, ?> run;
 
     @Restricted({NoExternalUse.class})
@@ -50,6 +49,12 @@ public class ParametersAction implements RunAction2, Iterable<ParameterValue>, Q
     @Restricted({NoExternalUse.class})
     public static final String SAFE_PARAMETERS_SYSTEM_PROPERTY_NAME = ParametersAction.class.getName() + ".safeParameters";
     private static final Logger LOGGER = Logger.getLogger(ParametersAction.class.getName());
+
+    @CheckForNull
+    @Restricted({NoExternalUse.class})
+    public Run<?, ?> getRun() {
+        return this.run;
+    }
 
     public ParametersAction(@NonNull List<ParameterValue> parameters) {
         this.parameters = new ArrayList(parameters);
@@ -206,9 +211,6 @@ public class ParametersAction implements RunAction2, Iterable<ParameterValue>, Q
     private Object readResolve() {
         if (this.parameters == null) {
             this.parameters = Collections.emptyList();
-        }
-        if (this.build != null) {
-            OldDataMonitor.report(this.build, "1.283");
         }
         if (this.safeParameters == null) {
             this.safeParameters = Collections.emptySet();

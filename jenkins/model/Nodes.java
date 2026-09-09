@@ -8,6 +8,7 @@ import hudson.ExtensionList;
 import hudson.Util;
 import hudson.XmlFile;
 import hudson.model.Computer;
+import hudson.model.Failure;
 import hudson.model.Messages;
 import hudson.model.Node;
 import hudson.model.PersistenceRoot;
@@ -187,6 +188,9 @@ public class Nodes implements PersistenceRoot {
         }
         if (oldOne == this.nodes.get(oldOne.getNodeName())) {
             Queue.runWithLock(() -> {
+                if (!newOne.getNodeName().equals(oldOne.getNodeName()) && this.nodes.containsKey(newOne.getNodeName())) {
+                    throw new Failure("Node already exists: " + newOne.getNodeName());
+                }
                 this.nodes.remove(oldOne.getNodeName());
                 this.nodes.put(newOne.getNodeName(), newOne);
                 newOne.onLoad(this, newOne.getNodeName());

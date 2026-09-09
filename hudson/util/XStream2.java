@@ -162,6 +162,7 @@ public class XStream2 extends XStream {
     protected void setupConverters() {
         super.setupConverters();
         this.reflectionConverter = new RobustReflectionConverter(getMapper(), JVM.newReflectionProvider(), new PluginClassOwnership());
+        this.reflectionConverter.setConverterLookup(getConverterLookup());
         registerConverter(this.reflectionConverter, -19);
     }
 

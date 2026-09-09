@@ -74,6 +74,7 @@ import jenkins.scm.DefaultSCMCheckoutStrategyImpl;
 import jenkins.scm.SCMCheckoutStrategy;
 import jenkins.scm.SCMCheckoutStrategyDescriptor;
 import jenkins.scm.SCMDecisionHandler;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.util.TimeDuration;
 import net.sf.json.JSONObject;
 import org.kohsuke.accmod.Restricted;
@@ -101,8 +102,11 @@ public abstract class AbstractProject<P extends AbstractProject<P, R>, R extends
     private volatile SCM scm;
     private volatile SCMCheckoutStrategy scmCheckoutStrategy;
     private volatile transient SCMRevisionState pollingBaseline;
+
+    @XStreamNotDeserializable
     private transient LazyBuildMixIn<P, R> buildMixIn;
 
+    @XStreamNotDeserializable
     @Restricted({NoExternalUse.class})
     protected transient RunMap<R> builds;
     private volatile Integer quietPeriod;
@@ -115,6 +119,8 @@ public abstract class AbstractProject<P extends AbstractProject<P, R>, R extends
     private volatile String jdk;
     private volatile BuildAuthorizationToken authToken;
     protected volatile DescribableList<Trigger<?>, TriggerDescriptor> triggers;
+
+    @XStreamNotDeserializable
     protected volatile transient List<Action> transientActions;
     private boolean concurrentBuild;
     private String customWorkspace;

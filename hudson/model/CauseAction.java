@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import jenkins.model.RunAction2;
+import jenkins.security.XStreamDeserializable;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -21,9 +22,11 @@ import org.kohsuke.stapler.export.ExportedBean;
 /* loaded from: CauseAction.class */
 public class CauseAction implements FoldableAction, RunAction2 {
 
+    @XStreamDeserializable
     @Deprecated
     private transient Cause cause;
 
+    @XStreamDeserializable
     @Deprecated
     private transient List<Cause> causes;
     private Map<Cause, Integer> causeBag;

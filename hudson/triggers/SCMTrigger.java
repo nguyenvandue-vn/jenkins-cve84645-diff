@@ -53,6 +53,7 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.model.RunAction2;
 import jenkins.scm.SCMDecisionHandler;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
@@ -276,8 +277,11 @@ public class SCMTrigger extends Trigger<Item> {
 
     /* loaded from: SCMTrigger$BuildAction.class */
     public static class BuildAction implements RunAction2 {
+
+        @XStreamNotDeserializable
         private transient Run<?, ?> run;
 
+        @XStreamNotDeserializable
         @SuppressFBWarnings(value = {"URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"}, justification = "for backward compatibility")
         @Deprecated
         public transient AbstractBuild build;
@@ -597,6 +601,8 @@ public class SCMTrigger extends Trigger<Item> {
 
         @CheckForNull
         private String pollingLog;
+
+        @XStreamNotDeserializable
         private transient Run run;
 
         public SCMTriggerCause(File logFile) throws IOException {

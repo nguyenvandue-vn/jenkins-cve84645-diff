@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.model.Jenkins;
+import jenkins.security.XStreamNotDeserializable;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerRequest2;
@@ -18,6 +19,8 @@ import org.kohsuke.stapler.export.ExportedBean;
 @ExportedBean
 /* loaded from: UserProperty.class */
 public abstract class UserProperty implements ReconfigurableDescribable<UserProperty>, ExtensionPoint {
+
+    @XStreamNotDeserializable
     protected transient User user;
 
     protected void setUser(User u) {

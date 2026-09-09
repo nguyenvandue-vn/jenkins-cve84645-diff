@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
+import jenkins.security.XStreamNotDeserializable;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerRequest2;
@@ -22,6 +23,8 @@ import org.kohsuke.stapler.export.ExportedBean;
 @ExportedBean
 /* loaded from: JobProperty.class */
 public abstract class JobProperty<J extends Job<?, ?>> implements ReconfigurableDescribable<JobProperty<?>>, BuildStep, ExtensionPoint {
+
+    @XStreamNotDeserializable
     protected transient J owner;
 
     protected void setOwner(J owner) {

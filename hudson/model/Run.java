@@ -99,6 +99,7 @@ import jenkins.model.details.KeptForeverDetail;
 import jenkins.model.details.TimestampDetail;
 import jenkins.model.lazy.BuildReference;
 import jenkins.security.MasterToSlaveCallable;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.security.stapler.StaplerNotDispatchable;
 import jenkins.util.SystemProperties;
 import jenkins.util.VirtualFile;
@@ -129,8 +130,11 @@ import org.springframework.security.core.Authentication;
 public abstract class Run<JobT extends Job<JobT, RunT>, RunT extends Run<JobT, RunT>> extends Actionable implements ExtensionPoint, Comparable<RunT>, AccessControlled, PersistenceRoot, DescriptorByNameOwner, OnMaster, StaplerProxy, HistoricalBuild, WithConsoleUrl {
     public static final long QUEUE_ID_UNKNOWN = -1;
 
+    @XStreamNotDeserializable
     @NonNull
     protected final transient JobT project;
+
+    @XStreamNotDeserializable
     public transient int number;
     private long queueId;
     volatile transient RunT previousBuildInProgress;
@@ -144,14 +148,20 @@ public abstract class Run<JobT extends Job<JobT, RunT>, RunT extends Run<JobT, R
     @CheckForNull
     protected volatile String description;
     private volatile String displayName;
+
+    @XStreamNotDeserializable
     private volatile transient State state;
     protected long duration;
     protected String charset;
     private boolean keepLog;
+
+    @XStreamNotDeserializable
     private volatile transient Run<JobT, RunT>.RunExecution runner;
 
     @CheckForNull
     private ArtifactManager artifactManager;
+
+    @XStreamNotDeserializable
     private transient boolean isPendingDelete;
     public static final int LIST_CUTOFF = Integer.parseInt(SystemProperties.getString("hudson.model.Run.ArtifactList.listCutoff", "20"));
     public static final XStream XSTREAM = new XStream2();

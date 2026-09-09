@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.util.SystemProperties;
 import jenkins.util.VirtualFile;
 import org.kohsuke.accmod.Restricted;
@@ -25,6 +26,8 @@ public class StandardArtifactManager extends ArtifactManager {
     @Restricted({NoExternalUse.class})
     @SuppressFBWarnings(value = {"MS_SHOULD_BE_FINAL"}, justification = "for script console")
     public static FilePath.TarCompression TAR_COMPRESSION;
+
+    @XStreamNotDeserializable
     protected transient Run<?, ?> build;
 
     static {

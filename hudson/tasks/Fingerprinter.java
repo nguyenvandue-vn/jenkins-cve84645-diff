@@ -41,6 +41,7 @@ import jenkins.MasterToSlaveFileCallable;
 import jenkins.model.DependencyDeclarer;
 import jenkins.model.Jenkins;
 import jenkins.model.RunAction2;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.tasks.SimpleBuildStep;
 import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
@@ -289,6 +290,8 @@ public class Fingerprinter extends Recorder implements Serializable, DependencyD
 
     /* loaded from: Fingerprinter$FingerprintAction.class */
     public static final class FingerprintAction implements RunAction2 {
+
+        @XStreamNotDeserializable
         private transient Run build;
         private PackedMap<String, String> record;
         private transient WeakReference<Map<String, Fingerprint>> ref;

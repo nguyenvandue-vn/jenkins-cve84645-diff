@@ -5,9 +5,11 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
+import hudson.security.Permission;
 import hudson.util.FormApply;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,6 +38,11 @@ public class AppearanceGlobalConfiguration extends ManagementLink {
         return false;
     };
 
+    @NonNull
+    public Permission getRequiredPermission() {
+        return Jenkins.READ;
+    }
+
     public String getIconFileName() {
         return "symbol-brush-outline";
     }
@@ -43,6 +50,20 @@ public class AppearanceGlobalConfiguration extends ManagementLink {
     @Restricted({NoExternalUse.class})
     public boolean hasPlugins() {
         return !Functions.getSortedDescriptorsForGlobalConfigByDescriptor(FILTER).isEmpty();
+    }
+
+    @Restricted({NoExternalUse.class})
+    public Collection<Descriptor> getConfigurableDescriptors() {
+        return Functions.getSortedDescriptorsForGlobalConfigByDescriptor(FILTER.and(d -> {
+            return Jenkins.get().hasPermission(d.getRequiredGlobalConfigPagePermission());
+        }));
+    }
+
+    @Restricted({NoExternalUse.class})
+    public Collection<Descriptor> getReadableDescriptors() {
+        return Functions.getSortedDescriptorsForGlobalConfigByDescriptor(FILTER.and(d -> {
+            return Jenkins.get().hasPermission(d.getRequiredGlobalConfigPagePermission()) || Jenkins.get().hasPermission(Jenkins.SYSTEM_READ);
+        }));
     }
 
     public String getDisplayName() {
@@ -73,7 +94,7 @@ public class AppearanceGlobalConfiguration extends ManagementLink {
         Jenkins j = Jenkins.get();
         j.checkPermission(Jenkins.MANAGE);
         boolean result = true;
-        for (Descriptor d : Functions.getSortedDescriptorsForGlobalConfigByDescriptor(FILTER)) {
+        for (Descriptor d : getConfigurableDescriptors()) {
             result &= configureDescriptor(req, json, d);
         }
         j.save();

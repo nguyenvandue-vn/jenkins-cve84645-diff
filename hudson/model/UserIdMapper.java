@@ -27,7 +27,7 @@ public class UserIdMapper {
 
     static void migrate() throws IOException {
         IdStrategy idStrategy = User.idStrategy();
-        File usersDirectory = User.getRootDir();
+        File usersDirectory = User.getUsersDirectory();
         UserIdMapper data = new UserIdMapper();
         XmlFile mapperXml = new XmlFile(XSTREAM, new File(usersDirectory, "users.xml"));
         if (mapperXml.exists()) {

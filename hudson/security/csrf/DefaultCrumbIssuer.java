@@ -19,6 +19,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.HexStringConfidentialKey;
+import jenkins.security.XStreamDeserializable;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.util.ClientHttpRedirect;
 import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
@@ -35,7 +37,11 @@ import org.springframework.security.core.Authentication;
 
 /* loaded from: DefaultCrumbIssuer.class */
 public class DefaultCrumbIssuer extends CrumbIssuer {
+
+    @XStreamNotDeserializable
     private transient MessageDigest md;
+
+    @XStreamDeserializable
     private transient boolean excludeClientIPFromCrumb;
 
     @Restricted({NoExternalUse.class})

@@ -98,6 +98,7 @@ import jenkins.util.SystemProperties;
 import jenkins.util.ThrowingCallable;
 import jenkins.util.ThrowingRunnable;
 import jenkins.util.Timer;
+import jenkins.util.xstream.CriticalXStreamException;
 import net.jcip.annotations.GuardedBy;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.accmod.Restricted;
@@ -108,6 +109,7 @@ import org.kohsuke.stapler.CancelRequestHandlingException;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
@@ -326,16 +328,19 @@ public class Queue extends ResourceController implements Saveable {
                         Files.move(queueFile.toPath(), bk.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     }
                     updateSnapshot();
-                } catch (IOException | InvalidPathException e) {
-                    LOGGER.log(Level.WARNING, "Failed to load the queue file " + String.valueOf(getXMLQueueFile()), (Throwable) e);
+                } catch (Throwable th) {
                     updateSnapshot();
+                    throw th;
                 }
-            } finally {
-                this.lock.unlock();
+            } catch (IOException | InvalidPathException e) {
+                LOGGER.log(Level.WARNING, "Failed to load the queue file " + String.valueOf(getXMLQueueFile()), (Throwable) e);
+                updateSnapshot();
+            } catch (CriticalXStreamException e2) {
+                LOGGER.log(Level.WARNING, "Failed to load the queue file due to a security policy violation; starting with an empty queue. " + String.valueOf(getXMLQueueFile()), e2);
+                updateSnapshot();
             }
-        } catch (Throwable th) {
-            updateSnapshot();
-            throw th;
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -1583,7 +1588,7 @@ public class Queue extends ResourceController implements Saveable {
     @ExportedBean(defaultVisibility = 999)
     @BridgeMethodsAdded
     /* loaded from: Queue$Item.class */
-    public static abstract class Item extends Actionable implements QueueItem {
+    public static abstract class Item extends Actionable implements QueueItem, StaplerProxy {
         private final long id;
 
         @Exported
@@ -1772,6 +1777,22 @@ public class Queue extends ResourceController implements Saveable {
         @Deprecated
         public org.acegisecurity.Authentication authenticate() {
             return org.acegisecurity.Authentication.fromSpring(authenticate2());
+        }
+
+        @Restricted({DoNotUse.class})
+        public Object getTarget() {
+            AccessControlled accessControlled = this.task;
+            if (!(accessControlled instanceof AccessControlled)) {
+                return this;
+            }
+            AccessControlled ac = accessControlled;
+            if (!ac.hasPermission(hudson.model.Item.DISCOVER)) {
+                return null;
+            }
+            if (!ac.hasPermission(hudson.model.Item.READ)) {
+                throw new AccessDeniedException("Please log in to access " + this.task.getUrl());
+            }
+            return this;
         }
 
         @Restricted({DoNotUse.class})

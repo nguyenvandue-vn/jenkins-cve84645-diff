@@ -74,6 +74,9 @@ public class BuildCommand extends CLICommand {
     protected int run() throws Exception {
         String format;
         this.job.checkPermission(Item.BUILD);
+        if (this.sync) {
+            this.job.checkPermission(Item.CANCEL);
+        }
         ParametersAction a = null;
         if (!this.parameters.isEmpty()) {
             ParametersDefinitionProperty pdp = this.job.getProperty((Class<ParametersDefinitionProperty>) ParametersDefinitionProperty.class);
@@ -163,7 +166,9 @@ public class BuildCommand extends CLICommand {
                     if (this.follow) {
                         return 125;
                     }
-                    f.cancel(true);
+                    if (this.job.hasPermission(Item.CANCEL)) {
+                        f.cancel(true);
+                    }
                     AbortException abortException2 = new AbortException();
                     abortException2.initCause(e3);
                     throw abortException2;

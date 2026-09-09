@@ -44,6 +44,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.model.Nodes;
+import jenkins.security.XStreamNotDeserializable;
 import jenkins.util.Listeners;
 import jenkins.util.SystemProperties;
 import jenkins.util.io.OnMaster;
@@ -68,7 +69,11 @@ public abstract class Node extends AbstractModelObject implements Reconfigurable
 
     @SuppressFBWarnings(value = {"MS_SHOULD_BE_FINAL"}, justification = "for script console")
     public static boolean SKIP_BUILD_CHECK_ON_FLYWEIGHTS = SystemProperties.getBoolean(Node.class.getName() + ".SKIP_BUILD_CHECK_ON_FLYWEIGHTS", true);
+
+    @XStreamNotDeserializable
     protected volatile transient boolean holdOffLaunchUntilSave;
+
+    @XStreamNotDeserializable
     private transient Nodes parent;
     private volatile OfflineCause temporaryOfflineCause;
 

@@ -56,6 +56,7 @@ import jenkins.security.NonePasswordComplexityRule;
 import jenkins.security.PasswordComplexityException;
 import jenkins.security.PasswordComplexityRule;
 import jenkins.security.SecurityListener;
+import jenkins.security.XStreamDeserializable;
 import jenkins.security.seed.UserSeedProperty;
 import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
@@ -525,6 +526,7 @@ public class HudsonPrivateSecurityRealm extends AbstractPasswordBasedSecurityRea
     public static final class Details extends UserProperty {
         private String passwordHash;
 
+        @XStreamDeserializable
         @Deprecated
         private transient String password;
 

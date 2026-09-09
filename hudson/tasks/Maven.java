@@ -47,6 +47,7 @@ import jenkins.mvn.GlobalMavenConfig;
 import jenkins.mvn.GlobalSettingsProvider;
 import jenkins.mvn.SettingsProvider;
 import jenkins.security.MasterToSlaveCallable;
+import jenkins.security.XStreamDeserializable;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
@@ -349,6 +350,7 @@ public class Maven extends Builder {
         public static final int MAVEN_21 = 1;
         public static final int MAVEN_30 = 2;
 
+        @XStreamDeserializable
         @Deprecated
         private transient String mavenHome;
         private static final long serialVersionUID = 1;

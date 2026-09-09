@@ -19,12 +19,15 @@ import hudson.tools.PropertyDescriptor;
 import java.io.IOException;
 import java.util.List;
 import jenkins.model.Jenkins;
+import jenkins.security.XStreamNotDeserializable;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerRequest2;
 
 /* loaded from: NodeProperty.class */
 public abstract class NodeProperty<N extends Node> implements ReconfigurableDescribable<NodeProperty<?>>, ExtensionPoint {
+
+    @XStreamNotDeserializable
     protected transient N node;
 
     protected void setNode(N node) {

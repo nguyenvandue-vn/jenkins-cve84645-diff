@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
+import jenkins.security.XStreamDeserializable;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -33,6 +34,7 @@ public final class JDK extends ToolInstallation implements NodeSpecific<JDK>, En
     public static final String DEFAULT_NAME = "(System)";
     private static final long serialVersionUID = -3318291200160313357L;
 
+    @XStreamDeserializable
     @Deprecated
     private transient String javaHome;
     private static final Logger LOGGER = Logger.getLogger(JDK.class.getName());

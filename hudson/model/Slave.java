@@ -51,6 +51,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import jenkins.security.MasterToSlaveCallable;
+import jenkins.security.XStreamDeserializable;
 import jenkins.slaves.WorkspaceLocator;
 import jenkins.util.SystemProperties;
 import org.kohsuke.accmod.Restricted;
@@ -76,6 +77,7 @@ public abstract class Slave extends Node implements Serializable {
     private String label;
     private DescribableList<NodeProperty<?>, NodePropertyDescriptor> nodeProperties;
 
+    @XStreamDeserializable
     @Deprecated
     private transient String userId;
     private transient Set<LabelAtom> previouslyAssignedLabels;
@@ -84,6 +86,7 @@ public abstract class Slave extends Node implements Serializable {
     private transient Set<LabelAtom> labelAtomSet;
     private static final ThreadLocal<Boolean> insideReadResolve;
 
+    @XStreamDeserializable
     @Deprecated
     private transient String agentCommand;
     private static final String WORKSPACE_ROOT;

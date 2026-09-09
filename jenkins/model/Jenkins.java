@@ -237,6 +237,7 @@ import jenkins.security.MasterToSlaveCallable;
 import jenkins.security.RedactSecretJsonInErrorMessageSanitizer;
 import jenkins.security.ResourceDomainConfiguration;
 import jenkins.security.SecurityListener;
+import jenkins.security.XStreamDeserializable;
 import jenkins.security.stapler.DoActionFilter;
 import jenkins.security.stapler.StaplerDispatchValidator;
 import jenkins.security.stapler.StaplerDispatchable;
@@ -344,6 +345,7 @@ public class Jenkins extends AbstractCIBase implements DirectlyModifiableTopLeve
     protected final transient ConcurrentMap<Node, Computer> computers;
     public final Hudson.CloudList clouds;
 
+    @XStreamDeserializable
     @Deprecated
     protected volatile transient NodeList slaves;
     private final transient Nodes nodes;
@@ -818,6 +820,10 @@ public class Jenkins extends AbstractCIBase implements DirectlyModifiableTopLeve
     }
 
     protected Object readResolve() {
+        Jenkins existing = getInstanceOrNull();
+        if (existing != null && existing != this) {
+            throw new IllegalStateException("A Jenkins singleton already exists; refusing to deserialize a second Jenkins instance. This is likely an attempted exploit via a forged configuration document.");
+        }
         if (this.jdks == null) {
             this.jdks = new ArrayList();
         }
@@ -830,6 +836,20 @@ public class Jenkins extends AbstractCIBase implements DirectlyModifiableTopLeve
         }
         _setLabelString(this.label);
         return this;
+    }
+
+    protected Object writeReplace() {
+        return XmlFile.replaceIfNotAtTopLevel(this, Replacer::new);
+    }
+
+    /* loaded from: Jenkins$Replacer.class */
+    private static class Replacer {
+        private Replacer() {
+        }
+
+        private Object readResolve() {
+            return Jenkins.get();
+        }
     }
 
     @CheckForNull
